@@ -1,0 +1,12 @@
+33d32
+< extern int h_NSpikeBuffer;
+91,94d89
+< extern int *d_SpikeBufferIdx0;
+< extern __device__ int *SpikeBufferIdx0;
+< // index of most recent spike stored in the buffer
+< 
+135,136c130
+< 				int *spike_buffer_size, int *spike_buffer_idx0,
+< 				int *spike_buffer_time,
+---
+> 				int *spike_buffer_size, int *spike_buffer_time,

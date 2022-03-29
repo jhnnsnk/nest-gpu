@@ -1,0 +1,15 @@
+1075,1080d1074
+<   
+<   int is0;
+<   gpuErrchk(cudaMemcpy(&is0, d_SpikeBufferIdx0 + i_spike_buffer,
+< 		       sizeof(int), cudaMemcpyDeviceToHost));
+<   int i_arr = is0*h_NSpikeBuffer+i_spike_buffer; // spike index in array
+< 
+1083c1077
+<   gpuErrchk(cudaMemcpy(&time_idx, d_SpikeBufferTimeIdx + i_arr,
+---
+>   gpuErrchk(cudaMemcpy(&time_idx, d_SpikeBufferTimeIdx + i_spike_buffer,
+1089c1083
+<   gpuErrchk(cudaMemcpy(&spike_height, d_SpikeBufferHeight + i_arr,
+---
+>   gpuErrchk(cudaMemcpy(&spike_height, d_SpikeBufferHeight + i_spike_buffer,

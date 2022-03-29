@@ -154,7 +154,7 @@ __device__ void PushSpike(int i_spike_buffer, float height)
 {
   LastSpikeTimeIdx[i_spike_buffer] = NESTGPUTimeIdx;
   LastSpikeHeight[i_spike_buffer] = height;
-  int i_group=NodeGroupMap[i_spike_buffer];
+  int i_group = NodeGroupMap[i_spike_buffer];
   int den_delay_idx;
   float *den_delay_arr = NodeGroupArray[i_group].den_delay_arr_;
   // check if node has dendritic delay
@@ -210,7 +210,7 @@ __device__ void PushSpike(int i_spike_buffer, float height)
   // spike should be stored if there are output connections
   // or if dendritic delay is > 0
   if (ConnectionGroupSize[i_spike_buffer]>0 || den_delay_idx>0) {
-    int Ns = SpikeBufferSize[i_spike_buffer]; // n. of spikes in buffer  
+    int Ns = SpikeBufferSize[i_spike_buffer]; // n. of spikes in buffer
     if (Ns>=MaxSpikeBufferSize) {
       printf("Maximum number of spikes in spike buffer exceeded"
 	     " for spike buffer %d\n", i_spike_buffer);
@@ -248,13 +248,13 @@ __global__ void SpikeBufferUpdate()
   int i_group=NodeGroupMap[i_spike_buffer];
   int den_delay_idx;
   float *den_delay_arr = NodeGroupArray[i_group].den_delay_arr_;
-  // check if node has dendritic delay  
+  // check if node has dendritic delay
   if (den_delay_arr != NULL) {
     int i_neuron = i_spike_buffer - NodeGroupArray[i_group].i_node_0_;
     int n_param = NodeGroupArray[i_group].n_param_;
     // dendritic delay index is stored in the parameter array
     // den_delay_arr points to the dendritic delay if the first
-    // node of the group. The other are separate by steps = n_param    
+    // node of the group. The other are separate by steps = n_param
     den_delay_idx = (int)round(den_delay_arr[i_neuron*n_param]
 			       /NESTGPUTimeResolution);
     //printf("isb update %d\tden_delay_idx: %d\n", i_spike_buffer, den_delay_idx);
@@ -265,31 +265,31 @@ __global__ void SpikeBufferUpdate()
 
   // flag for sending spikes back through dendrites (e.g. for STDP)
   bool rev_spike = false;
-  
   int Ns = SpikeBufferSize[i_spike_buffer]; // n. of spikes in buffer
   for (int is=0; is<Ns; is++) {
-    //int i_arr = is*NSpikeBuffer+i_spike_buffer; // spike index in array
-    int i_conn = SpikeBufferConnIdx[is*NSpikeBuffer+i_spike_buffer];
-    int spike_time_idx = SpikeBufferTimeIdx[is*NSpikeBuffer+i_spike_buffer];
+    int i_arr = is*NSpikeBuffer+i_spike_buffer; // spike index in array
+    int i_conn = SpikeBufferConnIdx[i_arr];
+    int spike_time_idx = SpikeBufferTimeIdx[i_arr];
     //if (i_spike_buffer==1) {
     //printf("is %d st %d dd %d\n", is, spike_time_idx, den_delay_idx);
     //}
     if (spike_time_idx+1 == den_delay_idx) {
       rev_spike = true;
     }
+    // connection index in array
+    int i_conn_arr = i_conn*NSpikeBuffer+i_spike_buffer;
     // if spike time matches connection group delay deliver it
     // to global spike array
     if (i_conn<ConnectionGroupSize[i_spike_buffer] &&
-	spike_time_idx
-	== ConnectionGroupDelay[i_conn*NSpikeBuffer+i_spike_buffer]) {
+	spike_time_idx == ConnectionGroupDelay[i_conn_arr]) {
       // spike time matches connection group delay
-      float height = SpikeBufferHeight[is*NSpikeBuffer+i_spike_buffer]; // spike multiplicity
+      float height = SpikeBufferHeight[i_arr]; // spike multiplicity
       // deliver spike
       SendSpike(i_spike_buffer, i_conn, height,
-		ConnectionGroupTargetSize[i_conn*NSpikeBuffer+i_spike_buffer]);
+		ConnectionGroupTargetSize[i_conn_arr]);
       // increase index of the next conn. group that will emit this spike
       i_conn++;
-      SpikeBufferConnIdx[is*NSpikeBuffer+i_spike_buffer] = i_conn;
+      SpikeBufferConnIdx[i_arr] = i_conn;
     }
     // Check if the oldest spike should be removed from the buffer:
     // check if it is the oldest spike of the buffer
@@ -297,11 +297,11 @@ __global__ void SpikeBufferUpdate()
     // and if spike time is greater than the dendritic delay
     if (is==Ns-1 && i_conn>=ConnectionGroupSize[i_spike_buffer]
 	&& spike_time_idx+1>=den_delay_idx) {
-      // in this case we don't need any more to keep track of the last spike
+      // in this case we don't need any more to keep track of the oldest spike
       SpikeBufferSize[i_spike_buffer]--; // so remove it from buffer
     }
     else {
-      SpikeBufferTimeIdx[is*NSpikeBuffer+i_spike_buffer]++;
+      SpikeBufferTimeIdx[i_arr]++;
       // increase time index
     }
   }

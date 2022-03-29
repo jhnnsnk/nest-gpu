@@ -1,0 +1,60 @@
+52d51
+< int h_NSpikeBuffer;
+123,128d121
+< int *d_SpikeBufferIdx0; // [NSpikeBuffer];
+< __device__ int *SpikeBufferIdx0; // [NSpikeBuffer];
+< // SpikeBufferIdx0[i_spike_buffer];
+< // where i_spike_buffer is the source node index
+< // index of most recent spike stored in the buffer
+< 
+226a220
+>     
+231,238c225,236
+<     // the index of the most recent spike is0 should be decreased by 1
+<     int is0 = (SpikeBufferIdx0[i_spike_buffer] + MaxSpikeBufferSize - 1)
+<       % MaxSpikeBufferSize;
+<     SpikeBufferIdx0[i_spike_buffer] = is0;
+<     int i_arr = is0*NSpikeBuffer+i_spike_buffer; // spike index in array
+<     SpikeBufferTimeIdx[i_arr] = 0; // time index is initialized to 0
+<     SpikeBufferConnIdx[i_arr] = 0; // connect. group index is initialized to 0
+<     SpikeBufferHeight[i_arr] = height; // spike multiplicity
+---
+>     for (int is=Ns; is>0; is--) {
+>       // shift all buffer content by one position 
+>       SpikeBufferTimeIdx[is*NSpikeBuffer+i_spike_buffer] =
+> 	SpikeBufferTimeIdx[(is-1)*NSpikeBuffer+i_spike_buffer];
+>       SpikeBufferConnIdx[is*NSpikeBuffer+i_spike_buffer] =
+> 	SpikeBufferConnIdx[(is-1)*NSpikeBuffer+i_spike_buffer];
+>       SpikeBufferHeight[is*NSpikeBuffer+i_spike_buffer] =
+> 	SpikeBufferHeight[(is-1)*NSpikeBuffer+i_spike_buffer];
+>     }
+>     SpikeBufferTimeIdx[i_spike_buffer] = 0; // time index is initialized to 0
+>     SpikeBufferConnIdx[i_spike_buffer] = 0; // connect. group index init. to 0
+>     SpikeBufferHeight[i_spike_buffer] = height; // spike multiplicity
+266a265
+> 
+269d267
+<   int is0 = SpikeBufferIdx0[i_spike_buffer]; // index of most recent spike
+272,273c270
+<     int is1 = (is0  + is)%MaxSpikeBufferSize;
+<     int i_arr = is1*NSpikeBuffer+i_spike_buffer; // spike index in array
+---
+>     int i_arr = is*NSpikeBuffer+i_spike_buffer; // spike index in array
+332d328
+<   h_NSpikeBuffer = n_spike_buffers;
+367d362
+<   gpuErrchk(cudaMalloc(&d_SpikeBufferIdx0, n_spike_buffers*sizeof(int)));
+375d369
+<   gpuErrchk(cudaMemset(d_SpikeBufferIdx0, 0, n_spike_buffers*sizeof(int)));
+524,525c518
+< 			   d_SpikeBufferSize, d_SpikeBufferIdx0,
+< 			   d_SpikeBufferTimeIdx,
+---
+> 			   d_SpikeBufferSize, d_SpikeBufferTimeIdx,
+566,567c559
+< 				int *spike_buffer_size, int *spike_buffer_idx0,
+< 				int *spike_buffer_time,
+---
+> 				int *spike_buffer_size, int *spike_buffer_time,
+591d582
+<   SpikeBufferIdx0 = spike_buffer_idx0;
