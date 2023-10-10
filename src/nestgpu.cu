@@ -53,6 +53,8 @@
 
 #include "remote_connect.h"
 
+#include "nvtx_macros.h"
+
 				    //#define VERBOSE_TIME
 
 __constant__ double NESTGPUTime;
@@ -504,15 +506,31 @@ int NESTGPU::Simulate(float sim_time) {
 
 int NESTGPU::Simulate()
 {
+  // Presimulation time hardcoded
+  if (sim_time_ < 500.0f)
+    {
+        PUSH_RANGE("PreSimulation", 0);
+    }
+    else
+    {
+        PUSH_RANGE("Simulation", 0)
+    }
+  PUSH_RANGE("StartSimulation", 1);
   StartSimulation();
+  POP_RANGE;
   
   for (long long it=0; it<Nt_; it++) {
     if (it%100==0 && verbosity_level_>=2 && print_time_==true) {
       printf("\r[%.2lf %%] Model time: %.3lf ms", 100.0*(neural_time_-neur_t0_)/sim_time_, neural_time_);
     }
+    PUSH_RANGE("SimulationStep", 2);
     SimulationStep();
+    POP_RANGE;
   }
+  PUSH_RANGE("EndSimulation", 3);
   EndSimulation();
+  POP_RANGE;
+  POP_RANGE;
 
   return 0;
 }
