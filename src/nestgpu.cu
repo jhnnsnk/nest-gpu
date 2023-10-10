@@ -515,6 +515,7 @@ int NESTGPU::Simulate()
     {
         PUSH_RANGE("Simulation", 0)
     }
+  
   PUSH_RANGE("StartSimulation", 1);
   StartSimulation();
   POP_RANGE;
@@ -627,9 +628,14 @@ int NESTGPU::SimulationStep()
   double time_mark;
 
   time_mark = getRealTime();
+  
+  PUSH_RANGE("SpikeBufferUpdate", 4);
   SpikeBufferUpdate<<<(GetNNode()+1023)/1024, 1024>>>();
   gpuErrchk( cudaPeekAtLastError() );
+  POP_RANGE;
+  
   gpuErrchk( cudaDeviceSynchronize() );
+
   SpikeBufferUpdate_time_ += (getRealTime() - time_mark);
   time_mark = getRealTime();
   neural_time_ = neur_t0_ + (double)time_resolution_*(it_+1);
@@ -647,16 +653,19 @@ int NESTGPU::SimulationStep()
     }
   }
   */
-  
+  PUSH_RANGE("NeuronUpdate", 4);
   for (unsigned int i=0; i<node_vect_.size(); i++) {
     node_vect_[i]->Update(it_, neural_time_);
   }
   gpuErrchk( cudaPeekAtLastError() );
+  POP_RANGE;
+
   gpuErrchk( cudaDeviceSynchronize() );
-  
+
   neuron_Update_time_ += (getRealTime() - time_mark);
   multimeter_->WriteRecords(neural_time_);
 
+  PUSH_RANGE("SendExternalSpike", 4);
   if (n_hosts_>1) {
     int n_ext_spike;
     time_mark = getRealTime();
@@ -671,19 +680,30 @@ int NESTGPU::SimulationStep()
       gpuErrchk( cudaDeviceSynchronize() );
       SendExternalSpike_time_ += (getRealTime() - time_mark);
     }
+    POP_RANGE;
     //for (int ih=0; ih<connect_mpi_->mpi_np_; ih++) {
     //if (ih == connect_mpi_->mpi_id_) {
 
     time_mark = getRealTime();
+
+    PUSH_RANGE("SendSpikeToRemote", 4);
     SendSpikeToRemote(n_hosts_, max_spike_per_host_);
+    POP_RANGE;
+
     SendSpikeToRemote_time_ += (getRealTime() - time_mark);
     time_mark = getRealTime();
+
+    PUSH_RANGE("RecvSpikeFromRemote", 4);
     RecvSpikeFromRemote(n_hosts_, max_spike_per_host_);
+    POP_RANGE;
 				      
     RecvSpikeFromRemote_time_ += (getRealTime() - time_mark);
+
+    PUSH_RANGE("CopySpikeFromRemote", 4);
     CopySpikeFromRemote(n_hosts_, max_spike_per_host_);
+    POP_RANGE;
+    
     MPI_Barrier(MPI_COMM_WORLD);
- 
   }
   
   int n_spikes;
@@ -691,20 +711,30 @@ int NESTGPU::SimulationStep()
   gpuErrchk(cudaMemcpy(&n_spikes, d_SpikeNum, sizeof(int),
 		       cudaMemcpyDeviceToHost));
 
-  ClearGetSpikeArrays();    
+  ClearGetSpikeArrays();   
   if (n_spikes > 0) {
     time_mark = getRealTime();
+
+    PUSH_RANGE("NestedLoop", 4);
     NestedLoop::Run<0>(nested_loop_algo_, n_spikes, d_SpikeTargetNum);
+    POP_RANGE;
+
     NestedLoop_time_ += (getRealTime() - time_mark);
   }
   time_mark = getRealTime();
+
+  PUSH_RANGE("PoissonGenerator", 4);
   for (unsigned int i=0; i<node_vect_.size(); i++) {
     if (node_vect_[i]->has_dir_conn_) {
       node_vect_[i]->SendDirectSpikes(time_idx);
     }
   }
+  POP_RANGE;
+
   poisson_generator_time_ += (getRealTime() - time_mark);
   time_mark = getRealTime();
+
+  PUSH_RANGE("GetSpikes", 4);
   for (unsigned int i=0; i<node_vect_.size(); i++) {
     if (node_vect_[i]->n_port_>0) {
 
@@ -728,11 +758,14 @@ int NESTGPU::SimulationStep()
     }
   }
   gpuErrchk( cudaPeekAtLastError() );
+  POP_RANGE;
+  
   gpuErrchk( cudaDeviceSynchronize() );
-
   GetSpike_time_ += (getRealTime() - time_mark);
 
   time_mark = getRealTime();
+
+  PUSH_RANGE("SpikeReset", 12);
   SpikeReset<<<1, 1>>>();
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
@@ -762,6 +795,7 @@ int NESTGPU::SimulationStep()
     }      
     //RevSpikeBufferUpdate_time_ += (getRealTime() - time_mark);
   }
+  POP_RANGE;
 
   for (unsigned int i=0; i<node_vect_.size(); i++) {
     // if spike times recording is activated for node group...
