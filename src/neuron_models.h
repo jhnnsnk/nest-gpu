@@ -27,7 +27,7 @@
 
 enum NeuronModels {
   i_null_model = 0, i_iaf_psc_exp_g_model,
-  i_iaf_psc_exp_hc_model, i_iaf_psc_exp_model,
+  i_iaf_psc_exp_hc_model, i_iaf_psc_exp_model, i_iaf_psc_alpha_model,
   i_ext_neuron_model, i_aeif_cond_beta_model, i_aeif_cond_alpha_model,
   i_aeif_psc_exp_model, i_aeif_psc_alpha_model, i_aeif_psc_delta_model,
   i_poisson_generator_model, i_spike_generator_model, i_parrot_neuron_model,
@@ -39,7 +39,7 @@ enum NeuronModels {
 };
 
 const std::string neuron_model_name[N_NEURON_MODELS] = {
-  "", "iaf_psc_exp_g", "iaf_psc_exp_hc", "iaf_psc_exp", "ext_neuron",
+  "", "iaf_psc_exp_g", "iaf_psc_exp_hc", "iaf_psc_exp", "iaf_psc_alpha", "ext_neuron",
   "aeif_cond_beta", "aeif_cond_alpha", "aeif_psc_exp", "aeif_psc_alpha",
   "aeif_psc_delta", "poisson_generator", "spike_generator",
   "parrot_neuron", "spike_detector",

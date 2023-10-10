@@ -1838,4 +1838,3 @@ int BaseNeuron::GetRecSpikeTimes(int **n_spike_times_pt,
   
   return 0;
 }
-  

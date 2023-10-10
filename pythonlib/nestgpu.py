@@ -14,8 +14,8 @@ print(' Homepage: https://github.com/nest/nest-gpu')
 print()
 
 
-lib_dir=os.environ["NEST_GPU"]
-lib_path=lib_dir + "/lib/libnestgpu.so"
+lib_dir=os.environ["NESTGPU_LIB"]
+lib_path=lib_dir# + "/lib/libnestgpu.so"
 #lib_path="/usr/local/lib/libnestgpu.so"
 _nestgpu=ctypes.CDLL(lib_path)
 
@@ -2114,7 +2114,7 @@ def SetStatus(gen_object, params, val=None):
         raise ValueError("Unrecognized type for first argument of SetStatus")
     
     if type(gen_object)==RemoteNodeSeq:
-        if gen_object.i_host==MpiId():
+        if gen_object.i_host==HostId():
             SetStatus(gen_object.node_seq, params, val)
         return
     
