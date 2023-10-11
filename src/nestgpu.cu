@@ -634,12 +634,6 @@ int NESTGPU::SimulationStep()
   time_mark = getRealTime();
   SpikeBufferUpdate<<<(GetNNode()+1023)/1024, 1024>>>();
   gpuErrchk( cudaPeekAtLastError() );
-  gpuErrchk( cudaPeekAtLastError() );
-  POP_RANGE;
-  
-  gpuErrchk( cudaPeekAtLastError() ); 
-  POP_RANGE;
-  
   gpuErrchk( cudaDeviceSynchronize() );
   SpikeBufferUpdate_time_ += (getRealTime() - time_mark);
   POP_RANGE;
@@ -688,7 +682,7 @@ int NESTGPU::SimulationStep()
     POP_RANGE;
 
     if (n_ext_spike != 0) {
-      PUSH_RANG("SortExtSpike", 12);
+      PUSH_RANGE("SortExtSpike", 12);
       time_mark = getRealTime();
       SendExternalSpike<<<(n_ext_spike+1023)/1024, 1024>>>();
       gpuErrchk( cudaPeekAtLastError() );
