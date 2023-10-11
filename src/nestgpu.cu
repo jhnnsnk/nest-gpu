@@ -506,16 +506,8 @@ int NESTGPU::Simulate(float sim_time) {
 
 int NESTGPU::Simulate()
 {
-  // Presimulation time hardcoded
-  if (sim_time_ < 50.0f)
-    {
-        PUSH_RANGE("PreSimulation", 0);
-    }
-    else
-    {
-        PUSH_RANGE("Simulation", 0)
-    }
-  
+  PUSH_RANGE("Simulation", 0)
+
   StartSimulation();
   
   for (long long it=0; it<Nt_; it++) {
