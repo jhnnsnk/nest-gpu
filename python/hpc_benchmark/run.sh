@@ -1,0 +1,2 @@
+export CUDA_VISIBLE_DEVICES=$OMPI_MCA_orte_ess_node_rank
+python hpc_benchmark.py
